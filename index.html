@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة الرهانات - عجلة الحظ</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: #fff;
+            text-align: center;
+        }
+        h1, h2 {
+            margin-top: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        .btn {
+            background: #00d1b2;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background: #00bfa5;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin: 10px auto;
+            display: block;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        canvas {
+            margin: 20px auto;
+            display: block;
+            border: 5px solid #fff;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- صفحة تسجيل الدخول -->
+    <div id="loginPage">
+        <h1>تسجيل الدخول</h1>
+        <div class="container">
+            <input type="text" id="username" placeholder="اسم المستخدم" required>
+            <input type="password" id="password" placeholder="كلمة المرور" required>
+            <button class="btn" id="loginBtn">تسجيل الدخول</button>
+        </div>
+    </div>
+
+    <!-- صفحة الدفع -->
+    <div id="paymentPage" style="display: none;">
+        <h1>الدفع</h1>
+        <div class="container">
+            <h2>ادفع لتحصل على 10% كرصيد إضافي</h2>
+            <input type="number" id="paymentAmount" placeholder="أدخل المبلغ (بالدولار)" required>
+            <button class="btn" id="payBtn">دفع الآن</button>
+        </div>
+    </div>
+
+    <!-- صفحة عجلة الحظ -->
+    <div id="wheelPage" style="display: none;">
+        <h1>منصة الرهانات - عجلة الحظ</h1>
+        <div class="container">
+            <h2>رصيدك الحالي: <span id="balance">$0.00</span></h2>
+            <canvas id="wheelCanvas" width="300" height="300"></canvas>
+            <button class="btn" id="spinWheel">دور العجلة</button>
+            <h3 id="wheelResult"></h3>
+            <button class="btn" id="withdrawBtn">سحب الأرباح</button>
+        </div>
+    </div>
+
+    <!-- صفحة السحب -->
+    <div id="withdrawPage" style="display: none;">
+        <h1>سحب الأرباح</h1>
+        <div class="container">
+            <h2>رصيدك الحالي: <span id="withdrawBalance">$0.00</span></h2>
+            <input type="number" id="withdrawAmount" placeholder="أدخل المبلغ المراد سحبه" required>
+            <button class="btn" id="confirmWithdrawBtn">تأكيد السحب</button>
+        </div>
+    </div>
+
+    <script>
+        // إعداد المتغيرات
+        let balance = 0;
+
+        // عرض وإخفاء الصفحات
+        const showPage = (pageId) => {
+            document.querySelectorAll('div[id$="Page"]').forEach(page => {
+                page.style.display = 'none';
+            });
+            document.getElementById(pageId).style.display = 'block';
+        };
+
+        // تسجيل الدخول
+        document.getElementById('loginBtn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username && password) {
+                alert('تم تسجيل الدخول بنجاح!');
+                showPage('paymentPage');
+            } else {
+                alert('يرجى ملء جميع الحقول.');
+            }
+        });
+
+        // الدفع
+        document.getElementById('payBtn').addEventListener('click', () => {
+            const paymentAmount = parseFloat(document.getElementById('paymentAmount').value);
+
+            if (paymentAmount && paymentAmount > 0) {
+                const bonus = paymentAmount * 0.1;
+                balance += paymentAmount + bonus;
+                document.getElementById('balance').innerText = `$${balance.toFixed(2)}`;
+                alert(`تم الدفع بنجاح! رصيدك الحالي: $${balance.toFixed(2)}`);
+                showPage('wheelPage');
+            } else {
+                alert('يرجى إدخال مبلغ صالح.');
+            }
+        });
+
+        // عجلة الحظ
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const wheelSections = ["$5", "$10", "$50", "$100", "$500", "$1000"];
+        const sectionColors = ["#FF5733", "#FFC300", "#DAF7A6", "#C70039", "#581845", "#28B463"];
+
+        function drawWheel() {
+            const numSections = wheelSections.length;
+            const anglePerSection = (2 * Math.PI) / numSections;
+            wheelSections.forEach((section, index) => {
+                const startAngle = index * anglePerSection;
+                const endAngle = startAngle + anglePerSection;
+                ctx.beginPath();
+                ctx.moveTo(canvas.width / 2, canvas.height / 2);
+                ctx.arc(canvas.width / 2, canvas.height / 2, canvas.width / 2, startAngle, endAngle);
+                ctx.fillStyle = sectionColors[index];
+                ctx.fill();
+                ctx.stroke();
+                ctx.save();
+                ctx.translate(
+                    canvas.width / 2 + Math.cos(startAngle + anglePerSection / 2) * canvas.width / 3,
+                    canvas.height / 2 + Math.sin(startAngle + anglePerSection / 2) * canvas.height / 3
+                );
+                ctx.rotate(startAngle + anglePerSection / 2);
+                ctx.fillStyle = "#fff";
+                ctx.font = "16px Arial";
+                ctx.fillText(section, -ctx.measureText(section).width / 2, 5);
+                ctx.restore();
+            });
+        }
+
+        drawWheel();
+
+        // تدوير العجلة
+        document.getElementById('spinWheel').addEventListener('click', () => {
+            if (balance <= 0) {
+                alert('رصيدك غير كافٍ لتدوير العجلة. يرجى الدفع أولاً.');
+                return;
+            }
+
+            const spins = Math.random() * 360 + 360 * 3; // دورات عشوائية
+            canvas.style.transition = "transform 4s ease-out";
+            canvas.style.transform = `rotate(${spins}deg)`;
+            setTimeout(() => {
+                canvas.style.transition = "none";
+                const finalAngle = spins % 360;
+                const sectionIndex = Math.floor(finalAngle / (360 / wheelSections.length));
+                const prize = wheelSections[wheelSections.length - 1 - sectionIndex];
+                document.getElementById('wheelResult').innerText = `مبروك! ربحت ${prize}`;
+                const prizeValue = parseInt(prize.replace('$', ''));
+                balance += prizeValue;
+                document.getElementById('balance').innerText = `$${balance.toFixed(2)}`;
+            }, 4000);
+        });
+
+        // السحب
+        document.getElementById('withdrawBtn').addEventListener('click', () => {
+            document.getElementById('withdrawBalance').innerText = `$${balance.toFixed(2)}`;
+            showPage('withdrawPage');
+        });
+
+        document.getElementById('confirmWithdrawBtn').addEventListener('click', () => {
+            const withdrawAmount = parseFloat(document.getElementById('withdrawAmount').value);
+
+            if (withdrawAmount > 0 && withdrawAmount <= balance) {
+                balance -= withdrawAmount;
+                document.getElementById('balance').innerText = `$${balance.toFixed(2)}`;
+                alert(`تم السحب بنجاح! المبلغ المسحوب: $${withdrawAmount.toFixed(2)}`);
+                showPage('wheelPage');
+            } else {
+                alert('رصيد غير كافٍ أو مبلغ غير صالح.');
+            }
